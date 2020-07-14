@@ -26,7 +26,7 @@ backend ip-${ip//./-} {
     .host = "ip-${ip//./-}.${REGION}.compute.internal";
     .port = "${PORT}";
     .probe = {
-        .url = "/health";
+        .url = "/";
         .timeout = 1s;
         .interval = 5s;
         .window = 5;
@@ -56,7 +56,8 @@ cat >>/root/default.vcl <<EOL
 
 sub vcl_recv {
 
-    if (req.url ~ "^/health") {
+    # the other varnish instances are going to be health checking us, just forward an OK response (don't try shard it!)
+    if (req.url == "/") {
        return(synth(750));
     }
     
