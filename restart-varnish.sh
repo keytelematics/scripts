@@ -56,11 +56,10 @@ cat >>/root/default.vcl <<EOL
 
 sub vcl_recv {
 
-    # the other varnish instances are going to be health checking us, just forward an OK response (don't try shard it!)
+    # the other varnish instances are health checking us, make a direct request to couch
     if (req.url == "/") {
        set req.backend_hint = ip-${ip//./-};
        return(pass);
-       # return(synth(750));
     } else {
       # Figure out where the content is
       set req.backend_hint = cluster.backend();
@@ -71,15 +70,6 @@ sub vcl_backend_response {
     set beresp.ttl = 10m;
 }
 
-sub vcl_synth {
-  if (resp.status == 750) {
-    # Set a status the client will understand
-    set resp.status = 200;
-    # Create our synthetic response
-    synthetic("OK");
-    return(deliver);
-  }
-}
 
 EOL
 
