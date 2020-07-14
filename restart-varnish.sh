@@ -12,7 +12,7 @@ MY_IP=$(hostname -I | awk '{print $1}')
 AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
 REGION=${AZ::-1}
 IPS=()
-for ip in $(aws ec2 describe-instances --region $REGION --query 'Reservations[].Instances[].[PrivateIpAddress,Tags[?Key==`Name`].Value | [0]]' --output text | sort -k 7 | grep couchdb-slave | grep -v $MY_IP | awk '{ print $1}')
+for ip in $(aws ec2 describe-instances --region $REGION --query 'Reservations[].Instances[].[PrivateIpAddress,Tags[?Key==`Name`].Value | [0]]' --output text | sort -k 7 | grep couchdb-slave | grep -v X$MY_IP | awk '{ print $1}')
 do
 IPS+=("${ip}")
 done;
