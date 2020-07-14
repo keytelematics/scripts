@@ -22,7 +22,7 @@ for ip in "${IPS[@]}"
 do
 cat >>/root/default.vcl <<EOL
 backend node_${ip//./_} {
-    .host = "${ip}";
+    .host = "ip-${ip//./-}.${REGION}.compute.internal";
     .port = "80";
 }
 EOL
