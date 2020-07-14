@@ -23,7 +23,7 @@ do
 cat >>/root/default.vcl <<EOL
 backend node_${ip//./_} {
     .host = "${ip}";
-    .port = "5985";
+    .port = "80";
 }
 EOL
 done;
