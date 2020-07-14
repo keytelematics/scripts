@@ -7,7 +7,7 @@ import std;
 import directors;
 EOL
 
-MY_IP=$(hostname -I | awk '{print $1}')
+MY_IP=X$(hostname -I | awk '{print $1}')
 
 AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
 REGION=${AZ::-1}
