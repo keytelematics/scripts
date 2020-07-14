@@ -7,7 +7,7 @@ import std;
 import directors;
 EOL
 
-MY_IP=X$(hostname -I | awk '{print $1}')
+MY_IP=$(hostname -I | awk '{print $1}')
 
 AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
 REGION=${AZ::-1}
@@ -31,7 +31,7 @@ done;
 cat >>/root/default.vcl <<EOL
 # the local instance backend proxy where we actually fetch the content from
 backend content {
-    .host = "127.0.0.1";
+    .host = "ip-${MY_IP//./-}.${REGION}.compute.internal";
     .port = "5984";
 }
 
