@@ -26,7 +26,7 @@ backend ip-${ip//./-} {
     .host = "ip-${ip//./-}.${REGION}.compute.internal";
     .port = "${PORT}";
     .probe = {
-        .url = "/";
+        .url = "/health";
         .timeout = 1s;
         .interval = 5s;
         .window = 5;
@@ -55,12 +55,27 @@ cat >>/root/default.vcl <<EOL
 }
 
 sub vcl_recv {
+
+    if (req.url ~ "^/health") {
+       return(synth(750));
+    }
+    
     # Figure out where the content is
     set req.backend_hint = cluster.backend();
 }
 
 sub vcl_backend_response {
     set beresp.ttl = 10m;
+}
+
+sub vcl_synth {
+  if (resp.status == 750) {
+    # Set a status the client will understand
+    set resp.status = 200;
+    # Create our synthetic response
+    synthetic("OK");
+    return(deliver);
+  }
 }
 
 EOL
