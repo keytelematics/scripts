@@ -59,7 +59,7 @@ sub vcl_recv {
     # the other varnish instances are going to be health checking us, just forward an OK response (don't try shard it!)
     if (req.url == "/") {
        set req.backend_hint = ip-${ip//./-};
-       return(fetch);
+       return(pass);
        # return(synth(750));
     } else {
       # Figure out where the content is
