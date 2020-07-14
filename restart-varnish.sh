@@ -12,28 +12,31 @@ MY_IP=$(hostname -I | awk '{print $1}')
 AZ=$(curl -s http://169.254.169.254/latest/meta-data/placement/availability-zone)
 REGION=${AZ::-1}
 IPS=()
-for ip in $(aws ec2 describe-instances --region $REGION --query 'Reservations[].Instances[].[PrivateIpAddress,Tags[?Key==`Name`].Value | [0]]' --output text | sort -k 7 | grep couchdb-slave | grep -v X$MY_IP | awk '{ print $1}')
+for ip in $(aws ec2 describe-instances --region $REGION --query 'Reservations[].Instances[].[PrivateIpAddress,Tags[?Key==`Name`].Value | [0]]' --output text | sort -k 7 | grep couchdb-slave | awk '{ print $1}')
 do
-IPS+=("${ip}")
+  IPS+=("${ip}")
 done;
 
 
 for ip in "${IPS[@]}"
 do
+PORT=$([ "$ip" == "$MY_IP" ] && echo "5984" || echo "80")
 cat >>/root/default.vcl <<EOL
-backend node_${ip//./_} {
+backend ip-${ip//./-} {
     .host = "ip-${ip//./-}.${REGION}.compute.internal";
-    .port = "80";
+    .port = "${PORT}";
+    .probe = {
+        .url = "/";
+        .timeout = 1s;
+        .interval = 5s;
+        .window = 5;
+        .threshold = 3;
+    }
 }
 EOL
 done;
 
 cat >>/root/default.vcl <<EOL
-# the local instance backend proxy where we actually fetch the content from
-backend content {
-    .host = "ip-${MY_IP//./-}.${REGION}.compute.internal";
-    .port = "5984";
-}
 
 # define the cluster
 sub vcl_init {
@@ -43,17 +46,15 @@ EOL
 for ip in "${IPS[@]}"
 do
 cat >>/root/default.vcl <<EOL
-   cluster.add_backend(node_${ip//./_});
+   cluster.add_backend(ip-${ip//./-});
 EOL
 done;
 
 cat >>/root/default.vcl <<EOL
-   cluster.add_backend(content);
    cluster.reconfigure();
 }
 
 sub vcl_recv {
-
     # Figure out where the content is
     set req.backend_hint = cluster.backend();
 }
