@@ -138,8 +138,14 @@ case "$1" in
   top)
       docker exec -it varnish varnishtop
       ;;
+  hist)
+      docker exec -it varnish varnishhist
+      ;;
+  admin)
+      docker exec -it varnish varnishadm
+      ;;
   *)
-      echo $"Usage: $0 {restart|reload|cluster|standalone|stats|logs|top}"
+      echo $"Usage: $0 {restart|reload|cluster|standalone|stats|logs|top|hist|admin}"
       exit 1
  
 esac
