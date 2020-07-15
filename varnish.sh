@@ -59,14 +59,17 @@ cat >>$DIR/default.vcl <<EOL
 }
 
 sub vcl_recv {
-
-    # the other varnish instances are health checking us, make a direct request to couch
-    if (req.url == "/") {
-       set req.backend_hint = ip-${ip//./-};
-       return(pass);
+    if (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE") {
+        return (synth(405, "Method not allowed"));
     } else {
-      # Figure out where the content is
-      set req.backend_hint = cluster.backend();
+      # the other varnish instances are health checking us, make a direct request to couch
+      if (req.url == "/") {
+        set req.backend_hint = ip-${ip//./-};
+        return(pass);
+      } else {
+        # Figure out where the content is
+        set req.backend_hint = cluster.backend();
+      }
     }
 }
 
@@ -74,6 +77,14 @@ sub vcl_backend_response {
     set beresp.ttl = 10m;
 }
 
+sub vcl_synth {
+    set resp.http.Content-Type = "application/json; charset=utf-8";
+    synthetic({"{
+       "status": "} + resp.status + {", 
+       "message": ""} + resp.reason + {"" 
+    }"});
+    return (deliver);
+}
 
 EOL
 
@@ -90,6 +101,21 @@ vcl 4.0;
 backend default {
   .host = "localhost";
   .port = "5984";
+}
+
+sub vcl_recv {
+    if (req.method == "POST" || req.method == "PUT" || req.method == "PATCH" || req.method == "DELETE") {
+        return (synth(405, "Method not allowed"));
+    }
+}
+
+sub vcl_synth {
+    set resp.http.Content-Type = "application/json; charset=utf-8";
+    synthetic({"{
+       "status": "} + resp.status + {", 
+       "message": ""} + resp.reason + {"" 
+    }"});
+    return (deliver);
 }
 
 sub vcl_backend_response {
