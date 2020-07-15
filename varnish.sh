@@ -105,7 +105,7 @@ EOL
 restart() {
   docker pull varnish:6
   docker rm -f varnish
-  docker run --name varnish --net host -e VARNISH_SIZE=500M -v $DIR/default.vcl:/etc/varnish/default.vcl:ro --tmpfs /var/lib/varnish:exec -d varnish:6
+  docker run -d --net host --name varnish --restart unless-stopped --log-opt max-size=10m --log-opt max-file=5 -e VARNISH_SIZE=500M -v $DIR/default.vcl:/etc/varnish/default.vcl:ro --tmpfs /var/lib/varnish:exec -d varnish:6
 }
 
 reload() {
@@ -149,5 +149,6 @@ case "$1" in
       exit 1
  
 esac
+
 
 
