@@ -27,7 +27,7 @@ do
 PORT=$([ "$ip" == "$MY_IP" ] && echo "5984" || echo "80")
 cat >>$DIR/default.vcl <<EOL
 backend ip-${ip//./-} {
-    .host = "ip-${ip//./-}.${REGION}.compute.internal";
+    .host = "${ip}";
     .port = "${PORT}";
     .probe = {
         .url = "/";
